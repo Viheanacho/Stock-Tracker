@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Stock Tracker</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Archivo:wght@300;500;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --bg-primary: #0a0e14;
+            --bg-secondary: #131820;
+            --bg-tertiary: #1a1f2e;
+            --accent-green: #00ff87;
+            --accent-red: #ff006e;
+            --accent-blue: #00b4d8;
+            --accent-yellow: #ffd60a;
+            --text-primary: #e0e6ed;
+            --text-secondary: #8b92a0;
+            --border-color: #2d3748;
+        }
+        
+        body {
+            font-family: 'Archivo', sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #0d1117 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        header {
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        h1 {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-transform: uppercase;
+            letter-spacing: -2px;
+            margin-bottom: 10px;
+            animation: slideDown 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .subtitle {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            animation: fadeIn 0.8s ease-out 0.3s both;
+        }
+        
+        @keyframes slideDown {
+            from {
+                transform: translateY(-30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+            animation: fadeIn 1s ease-out 0.5s both;
+        }
+        
+        .control-group {
+            position: relative;
+        }
+        
+        label {
+            display: block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        input, select, button {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: 'Archivo', sans-serif;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(0, 180, 216, 0.1);
+        }
+        
+        button {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-green));
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.85rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 255, 135, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+            animation: fadeIn 1s ease-out 0.7s both;
+        }
+        
+        .stat-card {
+            background: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid var(--accent-blue);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, rgba(0, 180, 216, 0.1), transparent);
+            border-radius: 50%;
+            transform: translate(40%, -40%);
+        }
+        
+        .stat-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+        
+        .stocks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            animation: fadeIn 1s ease-out 0.9s both;
+        }
+        
+        .stock-card {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 25px;
+            border: 1px solid var(--border-color);
+            position: relative;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            cursor: pointer;
+            overflow: hidden;
+        }
+        
+        .stock-card::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-green));
+            border-radius: 16px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+        }
+        
+        .stock-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(0, 255, 135, 0.2);
+        }
+        
+        .stock-card:hover::before {
+            opacity: 0.3;
+        }
+        
+        .stock-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        .stock-name {
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+            color: var(--text-primary);
+        }
+        
+        .stock-ticker {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+        
+        .stock-price {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .price-change {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .price-change.positive {
+            background: rgba(0, 255, 135, 0.15);
+            color: var(--accent-green);
+        }
+        
+        .price-change.negative {
+            background: rgba(255, 0, 110, 0.15);
+            color: var(--accent-red);
+        }
+        
+        .stock-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .detail-item {
+            font-size: 0.85rem;
+        }
+        
+        .detail-label {
+            color: var(--text-secondary);
+            margin-bottom: 3px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .detail-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .alert-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 12px;
+            height: 12px;
+            background: var(--accent-yellow);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.3);
+                opacity: 0.6;
+            }
+        }
+        
+        .news-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .news-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .news-item {
+            padding: 8px 0;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            line-height: 1.4;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        
+        .news-item::before {
+            content: '▸';
+            color: var(--accent-blue);
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 14, 20, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            padding: 20px;
+            overflow-y: auto;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            position: relative;
+            border: 1px solid var(--border-color);
+            animation: slideDown 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 2rem;
+            cursor: pointer;
+            width: auto;
+            padding: 0;
+            line-height: 1;
+            transition: color 0.2s ease;
+        }
+        
+        .close-modal:hover {
+            color: var(--accent-red);
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .chart-container {
+            height: 300px;
+            margin: 20px 0;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+        
+        @media (max-width: 768px) {
+            .stocks-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Stock Tracker Pro</h1>
+            <p class="subtitle">Real-time monitoring • Alerts • News • Analytics</p>
+        </header>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>Search Stocks</label>
+                <input type="text" id="searchInput" placeholder="Company name or ticker...">
+            </div>
+            <div class="control-group">
+                <label>Filter by Sector</label>
+                <select id="sectorFilter">
+                    <option value="">All Sectors</option>
+                    <option value="semiconductors">Semiconductors</option>
+                    <option value="renewable">Renewable Energy</option>
+                    <option value="ai-tech">AI & Technology</option>
+                    <option value="healthcare">Healthcare & Pharma</option>
+                    <option value="banking">Banking & Fintech</option>
+                    <option value="defense">Defense & Armament</option>
+                    <option value="automotive">Automotive & Aerospace</option>
+                    <option value="food">Food Manufacturing</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Filter by Region</label>
+                <select id="regionFilter">
+                    <option value="">All Regions</option>
+                    <option value="USA">USA</option>
+                    <option value="China">China</option>
+                    <option value="UK">UK</option>
+                    <option value="Germany">Germany</option>
+                    <option value="India">India</option>
+                    <option value="Nigeria">Nigeria</option>
+                    <option value="Japan">Japan</option>
+                    <option value="Taiwan">Taiwan</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Set Alert</label>
+                <button id="setAlertBtn">Configure Alerts</button>
+            </div>
+        </div>
+        
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-label">Total Watchlist</div>
+                <div class="stat-value" id="totalStocks">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Gainers Today</div>
+                <div class="stat-value" id="gainersCount" style="color: var(--accent-green);">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Losers Today</div>
+                <div class="stat-value" id="losersCount" style="color: var(--accent-red);">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Active Alerts</div>
+                <div class="stat-value" id="alertsCount" style="color: var(--accent-yellow);">0</div>
+            </div>
+        </div>
+        
+        <div class="stocks-grid" id="stocksGrid"></div>
+    </div>
+    
+    <div class="modal" id="stockModal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeModal()">×</button>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Sample stock data with real tickers from your list
+        const stocksDatabase = [
+           // SEMI CONDUCTORS
+  { name: 'TSMC', ticker: 'TSM', sector: 'semiconductors', region: 'Taiwan', exchange: 'NYSE' },
+  { name: 'Samsung Electronics', ticker: '005930.KS', sector: 'semiconductors', region: 'South Korea', exchange: 'KRX' },
+  { name: 'SK Hynix', ticker: '000660.KS', sector: 'semiconductors', region: 'South Korea', exchange: 'KRX' },
+  { name: 'SMIC', ticker: '0981.HK', sector: 'semiconductors', region: 'China', exchange: 'HKEX' },
+  { name: 'Renesas Electronics', ticker: '6723.T', sector: 'semiconductors', region: 'Japan', exchange: 'TSE' },
+  { name: 'MediaTek', ticker: '2454.TW', sector: 'semiconductors', region: 'Taiwan', exchange: 'TWSE' },
+  { name: 'Tata Elxsi', ticker: 'TATAELXSI.NS', sector: 'semiconductors', region: 'India', exchange: 'NSE' },
+  { name: 'MosChip Technologies', ticker: 'MOSCHIP.BO', sector: 'semiconductors', region: 'India', exchange: 'BSE' },
+  { name: 'Hygon Information Technology', ticker: '688041.SS', sector: 'semiconductors', region: 'China', exchange: 'SSE' },
+
+  { name: 'NVIDIA', ticker: 'NVDA', sector: 'semiconductors', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Intel Corporation', ticker: 'INTC', sector: 'semiconductors', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Texas Instruments', ticker: 'TXN', sector: 'semiconductors', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Broadcom Inc.', ticker: 'AVGO', sector: 'semiconductors', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'GlobalFoundries', ticker: 'GFS', sector: 'semiconductors', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Micron Technology', ticker: 'MU', sector: 'semiconductors', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Monolithic Power Systems', ticker: 'MPWR', sector: 'semiconductors', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Allegro MicroSystems', ticker: 'ALGM', sector: 'semiconductors', region: 'USA', exchange: 'NASDAQ' },
+
+  { name: 'ASML Holding', ticker: 'ASML', sector: 'semiconductors', region: 'Netherlands', exchange: 'NASDAQ' },
+  { name: 'Infineon Technologies', ticker: 'IFX.DE', sector: 'semiconductors', region: 'Germany', exchange: 'XETRA' },
+  { name: 'STMicroelectronics', ticker: 'STM', sector: 'semiconductors', region: 'France/Italy', exchange: 'NYSE' },
+  { name: 'NXP Semiconductors', ticker: 'NXPI', sector: 'semiconductors', region: 'Netherlands', exchange: 'NASDAQ' },
+  { name: 'Arm Holdings', ticker: 'ARM', sector: 'semiconductors', region: 'UK', exchange: 'NASDAQ' },
+  { name: 'Nordic Semiconductor', ticker: 'NOD.OL', sector: 'semiconductors', region: 'Norway', exchange: 'OSE' },
+  { name: 'Melexis', ticker: 'MELE.BR', sector: 'semiconductors', region: 'Belgium', exchange: 'EBR' },
+  { name: 'Alphawave IP Group', ticker: 'AWE.L', sector: 'semiconductors', region: 'UK', exchange: 'LSE' },
+  { name: 'Soitec', ticker: 'SOI.PA', sector: 'semiconductors', region: 'France', exchange: 'Euronext Paris' },
+  { name: 'Elmos Semiconductor', ticker: 'ELG.DE', sector: 'semiconductors', region: 'Germany', exchange: 'XETRA' },
+
+  { name: 'Weebit Nano', ticker: 'WBT.AX', sector: 'semiconductors', region: 'Australia', exchange: 'ASX' },
+  { name: 'Archer Materials', ticker: 'AXE.AX', sector: 'semiconductors', region: 'Australia', exchange: 'ASX' },
+  { name: 'BluGlass Limited', ticker: 'BLG.AX', sector: 'semiconductors', region: 'Australia', exchange: 'ASX' },
+  { name: '4DS Memory', ticker: '4DS.AX', sector: 'semiconductors', region: 'Australia', exchange: 'ASX' },
+  { name: 'Silex Systems', ticker: 'SLX.AX', sector: 'semiconductors', region: 'Australia', exchange: 'ASX' },
+  { name: 'Palantir', ticker: 'PLTR', sector: 'ai-tech', region: 'USA', exchange: 'NYSE' },
+  { name: 'Tesla', ticker: 'TSLA', sector: 'automotive', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'AMD', ticker: 'AMD', sector: 'semiconductors', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Qualcomm', ticker: 'QCOM', sector: 'semiconductors', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Applied Materials', ticker: 'AMAT', sector: 'semiconductors', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Lam Research', ticker: 'LRCX', sector: 'semiconductors', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'KLA Corporation', ticker: 'KLAC', sector: 'semiconductors', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Analog Devices', ticker: 'ADI', sector: 'semiconductors', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'ON Semiconductor', ticker: 'ON', sector: 'semiconductors', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Microchip Technology', ticker: 'MCHP', sector: 'semiconductors', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Skyworks Solutions', ticker: 'SWKS', sector: 'semiconductors', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Marvell Technology', ticker: 'MRVL', sector: 'semiconductors', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Synopsys', ticker: 'SNPS', sector: 'EDA software', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Cadence Design Systems', ticker: 'CDNS', sector: 'EDA software', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Lattice Semiconductor', ticker: 'LSCC', sector: 'semiconductors', region: 'USA', exchange: 'NASDAQ' },
+
+  { name: 'UMC', ticker: 'UMC', sector: 'semiconductors', region: 'Taiwan', exchange: 'NYSE' },
+  { name: 'ASE Technology', ticker: 'ASX', sector: 'semiconductors', region: 'Taiwan', exchange: 'NYSE' },
+  { name: 'Realtek Semiconductor', ticker: '2379.TW', sector: 'semiconductors', region: 'Taiwan', exchange: 'TWSE' },
+
+  { name: 'Rohm Semiconductor', ticker: '6963.T', sector: 'semiconductors', region: 'Japan', exchange: 'TSE' },
+  { name: 'Socionext', ticker: '6526.T', sector: 'semiconductors', region: 'Japan', exchange: 'TSE' },
+  { name: 'SCREEN Holdings', ticker: '7735.T', sector: 'semiconductors', region: 'Japan', exchange: 'TSE' },
+  { name: 'Advantest', ticker: '6857.T', sector: 'semiconductors', region: 'Japan', exchange: 'TSE' },
+
+  { name: 'Hua Hong Semiconductor', ticker: '1347.HK', sector: 'semiconductors', region: 'China', exchange: 'HKEX' },
+  { name: 'Will Semiconductor', ticker: '603501.SS', sector: 'semiconductors', region: 'China', exchange: 'SSE' },
+  { name: 'GigaDevice', ticker: '603986.SS', sector: 'semiconductors', region: 'China', exchange: 'SSE' },
+  { name: 'JCET Group', ticker: '600584.SS', sector: 'semiconductors', region: 'China', exchange: 'SSE' },
+
+  { name: 'ASM International', ticker: 'ASM.AS', sector: 'semiconductors', region: 'Netherlands', exchange: 'Euronext Amsterdam' },
+  { name: 'BESI', ticker: 'BESI.AS', sector: 'semiconductors', region: 'Netherlands', exchange: 'Euronext Amsterdam' },
+  { name: 'X-FAB', ticker: 'XFAB.PA', sector: 'semiconductors', region: 'Belgium', exchange: 'Euronext Paris' },
+  { name: 'ams OSRAM', ticker: 'AMS.VI', sector: 'semiconductors', region: 'Austria', exchange: 'VIE' },
+  { name: 'Suss MicroTec', ticker: 'SMHN.DE', sector: 'semiconductors', region: 'Germany', exchange: 'XETRA' },
+
+  { name: 'Tower Semiconductor', ticker: 'TSEM', sector: 'semiconductors', region: 'Israel', exchange: 'NASDAQ' },
+  { name: 'Mobileye', ticker: 'MBLY', sector: 'semiconductors', region: 'Israel', exchange: 'NASDAQ' },
+  { name: 'CEVA', ticker: 'CEVA', sector: 'semiconductors', region: 'Israel', exchange: 'NASDAQ' },
+  { name: 'Valens Semiconductor', ticker: 'VLN', sector: 'semiconductors', region: 'Israel', exchange: 'NYSE' },
+
+
+  { name: 'Sungrow Power Supply', ticker: '300274.SZ', sector: 'renewable_energy', region: 'China', exchange: 'SZSE' },
+  { name: 'Tata Power', ticker: 'TATAPOWER.NS', sector: 'renewable_energy', region: 'India', exchange: 'NSE' },
+  { name: 'JYP Entertainment', ticker: '035900.KQ', sector: 'sustainability', region: 'South Korea', exchange: 'KOSDAQ' },
+
+  { name: 'NextEra Energy', ticker: 'NEE', sector: 'renewable_energy', region: 'USA', exchange: 'NYSE' },
+  { name: 'First Solar', ticker: 'FSLR', sector: 'renewable_energy', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Canadian Solar', ticker: 'CSIQ', sector: 'renewable_energy', region: 'Canada', exchange: 'NASDAQ' },
+
+  { name: 'Hypera Pharma', ticker: 'HYPE3.SA', sector: 'sustainability', region: 'Brazil', exchange: 'B3' },
+  { name: 'Bancolombia', ticker: 'CIB', sector: 'sustainability', region: 'Colombia', exchange: 'NYSE' },
+  { name: 'Odontoprev', ticker: 'ODPV3.SA', sector: 'sustainability', region: 'Brazil', exchange: 'B3' },
+
+  { name: 'Ørsted', ticker: 'ORSTED.CO', sector: 'renewable_energy', region: 'Denmark', exchange: 'CPH' },
+  { name: 'Acciona Energía', ticker: 'ANE.MC', sector: 'renewable_energy', region: 'Spain', exchange: 'BME' },
+  { name: 'Norsk Renewables', ticker: 'NORSK-ME.OL', sector: 'renewable_energy', region: 'Norway', exchange: 'Euronext Growth Oslo' },
+  { name: 'Grenergy Renovables', ticker: 'GRE.MC', sector: 'renewable_energy', region: 'Spain', exchange: 'BME' },
+
+  { name: 'Aspen Pharmacare', ticker: 'APN.JO', sector: 'sustainability', region: 'South Africa', exchange: 'JSE' },
+  { name: 'ACWA Power', ticker: '2082.SR', sector: 'renewable_energy', region: 'Saudi Arabia', exchange: 'TADAWUL' },
+  { name: 'Fawry', ticker: 'FWRY.CA', sector: 'sustainability', region: 'Egypt', exchange: 'EGX' },
+
+  { name: 'CSL Limited', ticker: 'CSL.AX', sector: 'sustainability', region: 'Australia', exchange: 'ASX' },
+  { name: 'Weebit Nano', ticker: 'WBT.AX', sector: 'renewable_energy', region: 'Australia', exchange: 'ASX' },
+  { name: 'WiseTech Global', ticker: 'WTC.AX', sector: 'sustainability', region: 'Australia', exchange: 'ASX' },
+  { name: 'Silex Systems', ticker: 'SLX.AX', sector: 'energy', region: 'Australia', exchange: 'ASX' },
+  { name: 'Archer Materials', ticker: 'AXE.AX', sector: 'renewable_energy', region: 'Australia', exchange: 'ASX' },
+
+  { name: 'Adani Green Energy', ticker: 'ADANIGREEN.NS', sector: 'hydrogen', region: 'India', exchange: 'NSE' },
+  { name: 'Plug Power', ticker: 'PLUG', sector: 'hydrogen', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Lhyfe', ticker: 'LHYFE.PA', sector: 'hydrogen', region: 'France', exchange: 'Euronext Paris' },
+  { name: 'Enapter', ticker: 'H2G.DE', sector: 'hydrogen', region: 'Germany', exchange: 'Frankfurt' },
+  { name: 'Sparc Hydrogen', ticker: 'SPN.AX', sector: 'hydrogen', region: 'Australia', exchange: 'ASX' },
+
+
+  { name: 'Saudi Aramco', ticker: '2222.SR', sector: 'energy', region: 'Saudi Arabia', exchange: 'TADAWUL' },
+  { name: 'Ma’aden', ticker: '1211.SR', sector: 'mining', region: 'Saudi Arabia', exchange: 'TADAWUL' },
+  { name: 'AMAK', ticker: '1322.SR', sector: 'mining', region: 'Saudi Arabia', exchange: 'TADAWUL' },
+  { name: 'Petro Rabigh', ticker: '2380.SR', sector: 'energy', region: 'Saudi Arabia', exchange: 'TADAWUL' },
+
+  { name: 'ADNOC Gas', ticker: 'ADNOCGAS.AD', sector: 'energy', region: 'UAE', exchange: 'ADX' },
+  { name: 'ADNOC Drilling', ticker: 'ADNOCDRILL.AD', sector: 'energy', region: 'UAE', exchange: 'ADX' },
+  { name: 'Dana Gas', ticker: 'DANAGAS.AD', sector: 'energy', region: 'UAE', exchange: 'ADX' },
+
+  { name: 'OQ Gas Networks', ticker: 'OQGN.OM', sector: 'energy', region: 'Oman', exchange: 'MSX' },
+
+  { name: 'Industries Qatar', ticker: 'IQCD.QA', sector: 'energy', region: 'Qatar', exchange: 'QSE' },
+  { name: 'Nakilat', ticker: 'QGTS.QA', sector: 'energy', region: 'Qatar', exchange: 'QSE' },
+
+  { name: 'Centamin', ticker: 'CEY.L', sector: 'mining', region: 'Egypt', exchange: 'LSE' },
+  { name: 'AMOC', ticker: 'AMOC.CA', sector: 'energy', region: 'Egypt', exchange: 'EGX' },
+
+
+  { name: 'ExxonMobil', ticker: 'XOM', sector: 'energy', region: 'USA', exchange: 'NYSE' },
+  { name: 'Chevron', ticker: 'CVX', sector: 'energy', region: 'USA', exchange: 'NYSE' },
+  { name: 'ConocoPhillips', ticker: 'COP', sector: 'energy', region: 'USA', exchange: 'NYSE' },
+  { name: 'Newmont Corporation', ticker: 'NEM', sector: 'mining', region: 'USA', exchange: 'NYSE' },
+  { name: 'Freeport-McMoRan', ticker: 'FCX', sector: 'mining', region: 'USA', exchange: 'NYSE' },
+  { name: 'Albemarle', ticker: 'ALB', sector: 'mining', region: 'USA', exchange: 'NYSE' },
+  { name: 'EOG Resources', ticker: 'EOG', sector: 'energy', region: 'USA', exchange: 'NYSE' },
+  { name: 'MP Materials', ticker: 'MP', sector: 'mining', region: 'USA', exchange: 'NYSE' },
+  { name: 'Lithium Americas', ticker: 'LAC', sector: 'mining', region: 'USA', exchange: 'NYSE' },
+  { name: 'Chesapeake Energy', ticker: 'CHK', sector: 'energy', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Hecla Mining', ticker: 'HL', sector: 'mining', region: 'USA', exchange: 'NYSE' },
+  { name: 'Piedmont Lithium', ticker: 'PLL', sector: 'mining', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Energy Fuels', ticker: 'UUUU', sector: 'mining', region: 'USA', exchange: 'NYSE American' },
+  { name: 'Coeur Mining', ticker: 'CDE', sector: 'mining', region: 'USA', exchange: 'NYSE' },
+  { name: 'Patriot Battery Metals', ticker: 'PMETF', sector: 'mining', region: 'USA/Canada', exchange: 'OTCQX' },
+  { name: 'Standard Lithium', ticker: 'SLI', sector: 'mining', region: 'USA', exchange: 'NYSE American' },
+  { name: 'Northern Graphite', ticker: 'NGPHF', sector: 'mining', region: 'Canada', exchange: 'OTCQB' },
+  { name: 'Antero Resources', ticker: 'AR', sector: 'energy', region: 'USA', exchange: 'NYSE' },
+
+  { name: 'Caterpillar', ticker: 'CAT', sector: 'machinery', region: 'USA', exchange: 'NYSE' },
+  { name: 'Deere & Company', ticker: 'DE', sector: 'machinery', region: 'USA', exchange: 'NYSE' },
+  { name: 'Oshkosh Corporation', ticker: 'OSK', sector: 'machinery', region: 'USA', exchange: 'NYSE' },
+  { name: 'Alamo Group', ticker: 'ALG', sector: 'machinery', region: 'USA', exchange: 'NYSE' },
+  { name: 'Astec Industries', ticker: 'ASTE', sector: 'machinery', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Apple', ticker: 'AAPL', sector: 'electronics', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Jabil', ticker: 'JBL', sector: 'electronics', region: 'USA', exchange: 'NYSE' },
+  { name: 'Sanmina', ticker: 'SANM', sector: 'electronics', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Benchmark Electronics', ticker: 'BHE', sector: 'electronics', region: 'USA', exchange: 'NYSE' },
+  { name: 'Plexus', ticker: 'PLXS', sector: 'electronics', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Knowles', ticker: 'KN', sector: 'electronics', region: 'USA', exchange: 'NYSE' },
+  { name: 'Rockwell Automation', ticker: 'ROK', sector: 'parts_components', region: 'USA', exchange: 'NYSE' },
+  { name: 'Parker Hannifin', ticker: 'PH', sector: 'parts_components', region: 'USA', exchange: 'NYSE' },
+  { name: 'Amphenol', ticker: 'APH', sector: 'parts_components', region: 'USA', exchange: 'NYSE' },
+  { name: 'Vishay Intertechnology', ticker: 'VSH', sector: 'parts_components', region: 'USA', exchange: 'NYSE' },
+  { name: 'Protolabs', ticker: 'PRLB', sector: 'parts_components', region: 'USA', exchange: 'NYSE' },
+  { name: 'CTS Corporation', ticker: 'CTS', sector: 'parts_components', region: 'USA', exchange: 'NYSE' },
+  { name: 'Garmin', ticker: 'GRMN', sector: 'gadgets', region: 'USA', exchange: 'NYSE' },
+  { name: 'GoPro', ticker: 'GPRO', sector: 'gadgets', region: 'USA', exchange: 'NASDAQ' },
+
+  { name: 'Sany Heavy Industry', ticker: '600031.SS', sector: 'machinery', region: 'China', exchange: 'SSE' },
+  { name: 'XCMG Construction Machinery', ticker: '000425.SZ', sector: 'machinery', region: 'China', exchange: 'SZSE' },
+  { name: 'Zoomlion', ticker: '000157.SZ', sector: 'machinery', region: 'China', exchange: 'SZSE' },
+  { name: 'ZPMC', ticker: '600320.SS', sector: 'machinery', region: 'China', exchange: 'SSE' },
+  { name: 'Heli Co.', ticker: '600761.SS', sector: 'machinery', region: 'China', exchange: 'SSE' },
+  { name: 'Xiaomi', ticker: '1810.HK', sector: 'gadgets', region: 'China', exchange: 'HKEX' },
+  { name: 'Luxshare Precision', ticker: '002475.SZ', sector: 'parts_components', region: 'China', exchange: 'SZSE' },
+  { name: 'Gree Electric', ticker: '000651.SZ', sector: 'electronics', region: 'China', exchange: 'SZSE' },
+  { name: 'Haier Smart Home', ticker: '6690.HK', sector: 'electronics', region: 'China', exchange: 'HKEX' },
+  { name: 'Wingtech Technology', ticker: '600745.SS', sector: 'electronics', region: 'China', exchange: 'SSE' },
+  { name: 'GoerTek', ticker: '002241.SZ', sector: 'parts_components', region: 'China', exchange: 'SZSE' },
+  { name: 'Lens Technology', ticker: '300433.SZ', sector: 'parts_components', region: 'China', exchange: 'SZSE' },
+  { name: 'CATL', ticker: '300750.SZ', sector: 'parts_components', region: 'China', exchange: 'SZSE' },
+  { name: 'BOE Technology', ticker: '000725.SZ', sector: 'electronics', region: 'China', exchange: 'SZSE' },
+  { name: 'Shenzhen Inovance', ticker: '300124.SZ', sector: 'machinery', region: 'China', exchange: 'SZSE' },
+  { name: 'Han’s Laser', ticker: '002008.SZ', sector: 'machinery', region: 'China', exchange: 'SZSE' },
+  { name: 'Anker Innovations', ticker: '300866.SZ', sector: 'gadgets', region: 'China', exchange: 'SZSE' },
+
+  { name: 'Komatsu', ticker: '6301.T', sector: 'machinery', region: 'Japan', exchange: 'TSE' },
+  { name: 'Kubota', ticker: '6326.T', sector: 'machinery', region: 'Japan', exchange: 'TSE' },
+  { name: 'Fanuc', ticker: '6954.T', sector: 'machinery', region: 'Japan', exchange: 'TSE' },
+  { name: 'Makino Milling Machine', ticker: '6135.T', sector: 'machinery', region: 'Japan', exchange: 'TSE' },
+  { name: 'Tadano', ticker: '6395.T', sector: 'machinery', region: 'Japan', exchange: 'TSE' },
+  { name: 'Yaskawa Electric', ticker: '6933.T', sector: 'machinery', region: 'Japan', exchange: 'TSE' },
+  { name: 'Sony Group', ticker: '6758.T', sector: 'electronics', region: 'Japan', exchange: 'TSE' },
+  { name: 'Keyence', ticker: '6861.T', sector: 'electronics', region: 'Japan', exchange: 'TSE' },
+  { name: 'Murata Manufacturing', ticker: '6981.T', sector: 'electronics', region: 'Japan', exchange: 'TSE' },
+  { name: 'Kyocera', ticker: '6971.T', sector: 'electronics', region: 'Japan', exchange: 'TSE' },
+  { name: 'TDK', ticker: '6762.T', sector: 'electronics', region: 'Japan', exchange: 'TSE' },
+  { name: 'Tokyo Electron', ticker: '8035.T', sector: 'electronics', region: 'Japan', exchange: 'TSE' },
+  { name: 'Hamamatsu Photonics', ticker: '6965.T', sector: 'electronics', region: 'Japan', exchange: 'TSE' },
+  { name: 'Nidec', ticker: '6594.T', sector: 'parts_components', region: 'Japan', exchange: 'TSE' },
+  { name: 'Shimano', ticker: '7309.T', sector: 'parts_components', region: 'Japan', exchange: 'TSE' },
+  { name: 'SMC Corporation', ticker: '6273.T', sector: 'parts_components', region: 'Japan', exchange: 'TSE' },
+  { name: 'Hirose Electric', ticker: '6806.T', sector: 'parts_components', region: 'Japan', exchange: 'TSE' },
+  { name: 'Nabtesco', ticker: '6268.T', sector: 'parts_components', region: 'Japan', exchange: 'TSE' },
+  { name: 'Nintendo', ticker: '7974.T', sector: 'gadgets', region: 'Japan', exchange: 'TSE' },
+  { name: 'Casio Computer', ticker: '6952.T', sector: 'gadgets', region: 'Japan', exchange: 'TSE' },
+  { name: 'Ricoh', ticker: '7752.T', sector: 'gadgets', region: 'Japan', exchange: 'TSE' },
+
+  { name: 'Samsung Electronics', ticker: '005930.KS', sector: 'electronics', region: 'South Korea', exchange: 'KRX' },
+  { name: 'LG Electronics', ticker: '066570.KS', sector: 'electronics', region: 'South Korea', exchange: 'KRX' },
+  { name: 'SK Hynix', ticker: '000660.KS', sector: 'electronics', region: 'South Korea', exchange: 'KRX' },
+  { name: 'HD Hyundai Infracore', ticker: '042670.KS', sector: 'machinery', region: 'South Korea', exchange: 'KRX' },
+  { name: 'Doosan Bobcat', ticker: '241560.KS', sector: 'machinery', region: 'South Korea', exchange: 'KRX' },
+  { name: 'Hanwha Aerospace', ticker: '012450.KS', sector: 'defense', region: 'South Korea', exchange: 'KRX' },
+  { name: 'LS Electric', ticker: '010120.KS', sector: 'machinery', region: 'South Korea', exchange: 'KRX' },
+  { name: 'LG Energy Solution', ticker: '373220.KS', sector: 'parts_components', region: 'South Korea', exchange: 'KRX' },
+  { name: 'EcoPro BM', ticker: '247540.KQ', sector: 'parts_components', region: 'South Korea', exchange: 'KOSDAQ' },
+  { name: 'Koh Young Technology', ticker: '058470.KQ', sector: 'parts_components', region: 'South Korea', exchange: 'KOSDAQ' },
+  { name: 'SFA Engineering', ticker: '056190.KQ', sector: 'parts_components', region: 'South Korea', exchange: 'KOSDAQ' },
+  { name: 'Jusung Engineering', ticker: '036930.KQ', sector: 'parts_components', region: 'South Korea', exchange: 'KOSDAQ' },
+  { name: 'Soulbrain', ticker: '357780.KQ', sector: 'parts_components', region: 'South Korea', exchange: 'KOSDAQ' },
+  { name: 'Coway', ticker: '021240.KS', sector: 'gadgets', region: 'South Korea', exchange: 'KRX' },
+  { name: 'Partron', ticker: '091700.KQ', sector: 'gadgets', region: 'South Korea', exchange: 'KOSDAQ' },
+  { name: 'Samyang Optics', ticker: '225190.KQ', sector: 'gadgets', region: 'South Korea', exchange: 'KOSDAQ' },
+  { name: 'Dreamus Company (iRiver)', ticker: '060570.KQ', sector: 'gadgets', region: 'South Korea', exchange: 'KOSDAQ' },
+
+  { name: 'TSMC', ticker: '2330.TW', sector: 'electronics', region: 'Taiwan', exchange: 'TWSE' },
+  { name: 'Hon Hai Precision (Foxconn)', ticker: '2317.TW', sector: 'electronics', region: 'Taiwan', exchange: 'TWSE' },
+  { name: 'MediaTek', ticker: '2454.TW', sector: 'electronics', region: 'Taiwan', exchange: 'TWSE' },
+  { name: 'Delta Electronics', ticker: '2308.TW', sector: 'electronics', region: 'Taiwan', exchange: 'TWSE' },
+  { name: 'ASE Technology', ticker: '3711.TW', sector: 'electronics', region: 'Taiwan', exchange: 'TWSE' },
+  { name: 'United Microelectronics (UMC)', ticker: '2303.TW', sector: 'electronics', region: 'Taiwan', exchange: 'TWSE' },
+  { name: 'Quanta Computer', ticker: '2382.TW', sector: 'electronics', region: 'Taiwan', exchange: 'TWSE' },
+  { name: 'Wistron', ticker: '3231.TW', sector: 'electronics', region: 'Taiwan', exchange: 'TWSE' },
+  { name: 'Hiwin Technologies', ticker: '2049.TW', sector: 'machinery', region: 'Taiwan', exchange: 'TWSE' },
+  { name: 'Tongtai Machine', ticker: '4526.TW', sector: 'machinery', region: 'Taiwan', exchange: 'TWSE' },
+  { name: 'Teco Electric & Machinery', ticker: '1504.TW', sector: 'machinery', region: 'Taiwan', exchange: 'TWSE' },
+  { name: 'Goodway Machine', ticker: '1583.TW', sector: 'machinery', region: 'Taiwan', exchange: 'TWSE' },
+  { name: 'Largan Precision', ticker: '3008.TW', sector: 'parts_components', region: 'Taiwan', exchange: 'TWSE' },
+  { name: 'Advantech', ticker: '2395.TW', sector: 'parts_components', region: 'Taiwan', exchange: 'TWSE' },
+  { name: 'Yageo', ticker: '2327.TW', sector: 'parts_components', region: 'Taiwan', exchange: 'TWSE' },
+  { name: 'Aaeon Technology', ticker: '6414.TW', sector: 'parts_components', region: 'Taiwan', exchange: 'TWSE' },
+  { name: 'ASUS', ticker: '2357.TW', sector: 'gadgets', region: 'Taiwan', exchange: 'TWSE' },
+  { name: 'Acer', ticker: '2353.TW', sector: 'gadgets', region: 'Taiwan', exchange: 'TWSE' },
+  { name: 'HTC', ticker: '2498.TW', sector: 'gadgets', region: 'Taiwan', exchange: 'TWSE' },
+
+  { name: 'Dixon Technologies', ticker: 'DIXON.NS', sector: 'electronics', region: 'India', exchange: 'NSE' },
+  { name: 'Kaynes Technology', ticker: 'KAYNES.NS', sector: 'electronics', region: 'India', exchange: 'NSE' },
+  { name: 'Bharat Electronics', ticker: 'BEL.NS', sector: 'defense', region: 'India', exchange: 'NSE' },
+  { name: 'Syrma SGS Technology', ticker: 'SYRMA.NS', sector: 'electronics', region: 'India', exchange: 'NSE' },
+  { name: 'Centum Electronics', ticker: 'CENTUM.NS', sector: 'electronics', region: 'India', exchange: 'NSE' },
+  { name: 'Larsen & Toubro', ticker: 'LT.NS', sector: 'machinery', region: 'India', exchange: 'NSE' },
+  { name: 'Action Construction Equipment', ticker: 'ACE.NS', sector: 'machinery', region: 'India', exchange: 'NSE' },
+  { name: 'Cummins India', ticker: 'CUMMINSIND.NS', sector: 'machinery', region: 'India', exchange: 'NSE' },
+  { name: 'BHEL', ticker: 'BHEL.NS', sector: 'machinery', region: 'India', exchange: 'NSE' },
+  { name: 'Jyoti CNC Automation', ticker: 'JYOTICNC.NS', sector: 'machinery', region: 'India', exchange: 'NSE' },
+  { name: 'BEML', ticker: 'BEML.NS', sector: 'machinery', region: 'India', exchange: 'NSE' },
+  { name: 'Amber Enterprises', ticker: 'AMBER.NS', sector: 'parts_components', region: 'India', exchange: 'NSE' },
+  { name: 'Avalon Technologies', ticker: 'AVALON.NS', sector: 'parts_components', region: 'India', exchange: 'NSE' },
+  { name: 'CG Power', ticker: 'CGPOWER.NS', sector: 'parts_components', region: 'India', exchange: 'NSE' },
+  { name: 'Exicom Tele-Systems', ticker: 'EXICOM.NS', sector: 'parts_components', region: 'India', exchange: 'NSE' },
+  { name: 'Sahasra Electronics', ticker: 'SAHASRA.NS', sector: 'parts_components', region: 'India', exchange: 'NSE' },
+  { name: 'Titan Company', ticker: 'TITAN.NS', sector: 'gadgets', region: 'India', exchange: 'NSE' },
+  { name: 'V-Guard Industries', ticker: 'VGUARD.NS', sector: 'gadgets', region: 'India', exchange: 'NSE' },
+  { name: 'Optiemus Infracom', ticker: 'OPTIEMUS.NS', sector: 'gadgets', region: 'India', exchange: 'NSE' },
+  { name: 'Rolls-Royce Holdings', ticker: 'RR.L', sector: 'machinery', region: 'UK', exchange: 'LSE' },
+  { name: 'Weir Group', ticker: 'WEIR.L', sector: 'machinery', region: 'UK', exchange: 'LSE' },
+  { name: 'Rotork', ticker: 'ROR.L', sector: 'machinery', region: 'UK', exchange: 'LSE' },
+  { name: 'Spirax Group', ticker: 'SPX.L', sector: 'machinery', region: 'UK', exchange: 'LSE' },
+  { name: 'Terex', ticker: 'TEX', sector: 'machinery', region: 'USA/UK', exchange: 'NYSE' },
+  { name: 'BAE Systems', ticker: 'BA.L', sector: 'defense', region: 'UK', exchange: 'LSE' },
+  { name: 'Renishaw', ticker: 'RSW.L', sector: 'electronics', region: 'UK', exchange: 'LSE' },
+  { name: 'TT Electronics', ticker: 'TTG.L', sector: 'electronics', region: 'UK', exchange: 'LSE' },
+  { name: 'Filtronic', ticker: 'FTC.L', sector: 'electronics', region: 'UK', exchange: 'LSE' },
+  { name: 'Oxford Instruments', ticker: 'OXIG.L', sector: 'electronics', region: 'UK', exchange: 'LSE' },
+  { name: 'Dialight', ticker: 'DIA.L', sector: 'electronics', region: 'UK', exchange: 'LSE' },
+  { name: 'RS Group', ticker: 'RS1.L', sector: 'parts_components', region: 'UK', exchange: 'LSE' },
+  { name: 'OSI Systems', ticker: 'OSIS', sector: 'parts_components', region: 'USA/UK', exchange: 'NASDAQ' },
+
+  { name: 'Codan Limited', ticker: 'CDA.AX', sector: 'electronics', region: 'Australia', exchange: 'ASX' },
+  { name: 'CAP-XX', ticker: 'CPX.L', sector: 'parts_components', region: 'Australia/UK', exchange: 'LSE' },
+  { name: 'Nuheara', ticker: 'NUH.AX', sector: 'gadgets', region: 'Australia', exchange: 'ASX' },
+  { name: 'Atomos', ticker: 'AMS.AX', sector: 'gadgets', region: 'Australia', exchange: 'ASX' },
+  
+  { name: 'BUA Foods Plc', ticker: 'BUAFOODS.NG', sector: 'food_manufacturing', region: 'Nigeria', exchange: 'NGX' },
+  { name: 'Dangote Sugar Refinery', ticker: 'DANGSUGAR.NG', sector: 'food_manufacturing', region: 'Nigeria', exchange: 'NGX' },
+  { name: 'Nestlé Nigeria Plc', ticker: 'NESTLE.NG', sector: 'food_manufacturing', region: 'Nigeria', exchange: 'NGX' },
+  { name: 'Flour Mills of Nigeria', ticker: 'FLOURMILL.NG', sector: 'food_manufacturing', region: 'Nigeria', exchange: 'NGX' },
+  { name: 'Honeywell Flour Mill', ticker: 'HONYFLOUR.NG', sector: 'food_manufacturing', region: 'Nigeria', exchange: 'NGX' },
+  { name: 'Cadbury Nigeria Plc', ticker: 'CADBURY.NG', sector: 'food_manufacturing', region: 'Nigeria', exchange: 'NGX' },
+  { name: 'NASCON Allied Industries', ticker: 'NASCON.NG', sector: 'food_manufacturing', region: 'Nigeria', exchange: 'NGX' },
+  { name: 'Unilever Nigeria', ticker: 'UNILEVER.NG', sector: 'food_manufacturing', region: 'Nigeria', exchange: 'NGX' },
+  
+  { name: 'PepsiCo', ticker: 'PEP', sector: 'food_manufacturing', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Tyson Foods', ticker: 'TSN', sector: 'food_manufacturing', region: 'USA', exchange: 'NYSE' },
+  { name: 'Kraft Heinz', ticker: 'KHC', sector: 'food_manufacturing', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'General Mills', ticker: 'GIS', sector: 'food_manufacturing', region: 'USA', exchange: 'NYSE' },
+  { name: 'Hormel Foods', ticker: 'HRL', sector: 'food_manufacturing', region: 'USA', exchange: 'NYSE' },
+  { name: 'TreeHouse Foods', ticker: 'THS', sector: 'food_manufacturing', region: 'USA', exchange: 'NYSE' },
+  { name: 'Freshpet', ticker: 'FRPT', sector: 'food_manufacturing', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'JBT Corporation', ticker: 'JBT', sector: 'food_equipment', region: 'USA', exchange: 'NYSE' },
+  { name: 'Middleby Corporation', ticker: 'MIDD', sector: 'food_equipment', region: 'USA', exchange: 'NASDAQ' },
+
+  { name: 'Nestlé India', ticker: 'NESTLEIND.NS', sector: 'food_manufacturing', region: 'India', exchange: 'NSE' },
+  { name: 'Britannia Industries', ticker: 'BRITANNIA.NS', sector: 'food_manufacturing', region: 'India', exchange: 'NSE' },
+  { name: 'Adani Wilmar', ticker: 'AWL.NS', sector: 'food_manufacturing', region: 'India', exchange: 'NSE' },
+  { name: 'Hatsun Agro Product', ticker: 'HATSUN.NS', sector: 'food_manufacturing', region: 'India', exchange: 'NSE' },
+  { name: 'Bikaji Foods International', ticker: 'BIKAJI.NS', sector: 'food_manufacturing', region: 'India', exchange: 'NSE' },
+  { name: 'LT Foods', ticker: 'LTFOODS.NS', sector: 'food_manufacturing', region: 'India', exchange: 'NSE' },
+  { name: 'Parag Milk Foods', ticker: 'PARAGMILK.NS', sector: 'food_manufacturing', region: 'India', exchange: 'NSE' },
+  { name: 'Varun Beverages', ticker: 'VBL.NS', sector: 'food_manufacturing', region: 'India', exchange: 'NSE' },
+  { name: 'Annapurna Swadisht', ticker: 'ANNAPURNA.NS', sector: 'food_manufacturing', region: 'India', exchange: 'NSE' },
+  { name: 'Baba Food Processing', ticker: 'BABAFOOD.NS', sector: 'food_manufacturing', region: 'India', exchange: 'NSE' },
+  
+  { name: 'Yili Group', ticker: '600887.SS', sector: 'food_manufacturing', region: 'China', exchange: 'SSE' },
+  { name: 'WH Group', ticker: '0288.HK', sector: 'food_manufacturing', region: 'China', exchange: 'HKEX' },
+  { name: 'Foshan Haitian', ticker: '603288.SS', sector: 'food_manufacturing', region: 'China', exchange: 'SSE' },
+  { name: 'Tingyi (Master Kong)', ticker: '0322.HK', sector: 'food_manufacturing', region: 'China', exchange: 'HKEX' },
+  { name: 'Want Want China', ticker: '0151.HK', sector: 'food_manufacturing', region: 'China', exchange: 'HKEX' },
+  { name: 'Mengniu Dairy', ticker: '2319.HK', sector: 'food_manufacturing', region: 'China', exchange: 'HKEX' },
+  { name: 'Muyuan Foods', ticker: '002714.SZ', sector: 'food_manufacturing', region: 'China', exchange: 'SZSE' },
+  { name: 'Angel Yeast', ticker: '600298.SS', sector: 'food_manufacturing', region: 'China', exchange: 'SSE' },
+ 
+  { name: 'Ajinomoto', ticker: '2802.T', sector: 'food_manufacturing', region: 'Japan', exchange: 'TSE' },
+  { name: 'Nissin Foods Holdings', ticker: '2897.T', sector: 'food_manufacturing', region: 'Japan', exchange: 'TSE' },
+  { name: 'Kikkoman', ticker: '2801.T', sector: 'food_manufacturing', region: 'Japan', exchange: 'TSE' },
+  { name: 'Asahi Group Holdings', ticker: '2502.T', sector: 'food_manufacturing', region: 'Japan', exchange: 'TSE' },
+  { name: 'Nichirei', ticker: '2871.T', sector: 'food_manufacturing', region: 'Japan', exchange: 'TSE' },
+  { name: 'Kewpie', ticker: '2809.T', sector: 'food_manufacturing', region: 'Japan', exchange: 'TSE' },
+  { name: 'Meiji Holdings', ticker: '2269.T', sector: 'food_manufacturing', region: 'Japan', exchange: 'TSE' },
+  { name: 'Toyo Suisan', ticker: '2875.T', sector: 'food_manufacturing', region: 'Japan', exchange: 'TSE' },
+  { name: 'House Foods Group', ticker: '2810.T', sector: 'food_manufacturing', region: 'Japan', exchange: 'TSE' },
+  { name: 'Suzumo Machinery', ticker: '6405.T', sector: 'food_equipment', region: 'Japan', exchange: 'TSE' },
+  { name: 'Rheon Automatic Machinery', ticker: '6418.T', sector: 'food_equipment', region: 'Japan', exchange: 'TSE' },
+  { name: 'Hoshizaki Corporation', ticker: '6465.T', sector: 'food_equipment', region: 'Japan', exchange: 'TSE' },
+  { name: 'Anritsu', ticker: '6754.T', sector: 'food_equipment', region: 'Japan', exchange: 'TSE' },
+
+  { name: 'Pickles Corporation', ticker: '2925.T', sector: 'food_manufacturing', region: 'Japan', exchange: 'TSE' },
+  { name: 'Ebara Foods Industry', ticker: '2819.T', sector: 'food_manufacturing', region: 'Japan', exchange: 'TSE' },
+  { name: 'Kameda Seika', ticker: '2220.T', sector: 'food_manufacturing', region: 'Japan', exchange: 'TSE' },
+  { name: 'S&B Foods', ticker: '2805.T', sector: 'food_manufacturing', region: 'Japan', exchange: 'TSE' },
+
+  { name: 'Südzucker', ticker: 'SZU.DE', sector: 'food_manufacturing', region: 'Germany', exchange: 'XETRA' },
+  { name: 'Frosta', ticker: 'FRO.DE', sector: 'food_manufacturing', region: 'Germany', exchange: 'XETRA' },
+  { name: 'Veganz Group', ticker: 'VEZ.DE', sector: 'food_manufacturing', region: 'Germany', exchange: 'XETRA' },
+  { name: 'Krones', ticker: 'KRN.DE', sector: 'food_equipment', region: 'Germany', exchange: 'XETRA' },
+  { name: 'GEA Group', ticker: 'G1A.DE', sector: 'food_equipment', region: 'Germany', exchange: 'XETRA' },
+  { name: 'Alexanderwerk', ticker: 'ALX.DE', sector: 'food_equipment', region: 'Germany', exchange: 'Düsseldorf' },
+  { name: 'Symrise', ticker: 'SY1.DE', sector: 'food_ingredients', region: 'Germany', exchange: 'XETRA' },
+  { name: 'Schwälbchen Molkerei', ticker: 'SWB.DE', sector: 'food_manufacturing', region: 'Germany', exchange: 'XETRA' },
+
+  { name: 'Associated British Foods', ticker: 'ABF.L', sector: 'food_manufacturing', region: 'UK', exchange: 'LSE' },
+  { name: 'Diageo', ticker: 'DGE.L', sector: 'food_manufacturing', region: 'UK', exchange: 'LSE' },
+  { name: 'Cranswick', ticker: 'CWK.L', sector: 'food_manufacturing', region: 'UK', exchange: 'LSE' },
+  { name: 'Bakkavor Group', ticker: 'BAKK.L', sector: 'food_manufacturing', region: 'UK', exchange: 'LSE' },
+  { name: 'Premier Foods', ticker: 'PFD.L', sector: 'food_manufacturing', region: 'UK', exchange: 'LSE' },
+  { name: 'Greencore Group', ticker: 'GNC.L', sector: 'food_manufacturing', region: 'UK', exchange: 'LSE' },
+  { name: 'Tate & Lyle', ticker: 'TATE.L', sector: 'food_ingredients', region: 'UK', exchange: 'LSE' },
+
+  { name: 'Treasury Wine Estates', ticker: 'TWE.AX', sector: 'food_manufacturing', region: 'Australia', exchange: 'ASX' },
+  { name: 'Bega Cheese', ticker: 'BGA.AX', sector: 'food_manufacturing', region: 'Australia', exchange: 'ASX' },
+  { name: 'Inghams Group', ticker: 'ING.AX', sector: 'food_manufacturing', region: 'Australia', exchange: 'ASX' },
+  { name: 'GrainCorp', ticker: 'GNC.AX', sector: 'food_manufacturing', region: 'Australia', exchange: 'ASX' },
+  { name: 'Cobram Estate Olives', ticker: 'CBO.AX', sector: 'food_manufacturing', region: 'Australia', exchange: 'ASX' },
+  { name: 'FFI Holdings', ticker: 'FFI.AX', sector: 'food_ingredients', region: 'Australia', exchange: 'ASX' },
+  { name: 'SMIC', ticker: '0981.HK', sector: 'semiconductors', region: 'China', exchange: 'HKEX' },
+  { name: 'GigaDevice', ticker: '603986.SS', sector: 'semiconductors', region: 'China', exchange: 'SSE' },
+  { name: 'Cambricon Technologies', ticker: '688256.SS', sector: 'semiconductors', region: 'China', exchange: 'SSE' },
+  { name: 'Baidu', ticker: 'BIDU', sector: 'ai_infrastructure', region: 'China', exchange: 'NASDAQ' },
+  { name: 'Naura Technology Group', ticker: '002371.SZ', sector: 'semiconductors', region: 'China', exchange: 'SZSE' },
+  { name: 'Xiaomi Corporation', ticker: '1810.HK', sector: 'technology', region: 'China', exchange: 'HKEX' },
+  { name: 'NVIDIA', ticker: 'NVDA', sector: 'semiconductors', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'AMD', ticker: 'AMD', sector: 'semiconductors', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Arista Networks', ticker: 'ANET', sector: 'ai_infrastructure', region: 'USA', exchange: 'NYSE' },
+  { name: 'Vertiv Holdings', ticker: 'VRT', sector: 'ai_infrastructure', region: 'USA', exchange: 'NYSE' },
+  { name: 'Super Micro Computer', ticker: 'SMCI', sector: 'ai_hardware', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Equinix', ticker: 'EQIX', sector: 'ai_infrastructure', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Broadcom', ticker: 'AVGO', sector: 'semiconductors', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Micron Technology', ticker: 'MU', sector: 'semiconductors', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Seagate Technology', ticker: 'STX', sector: 'ai_hardware', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Coherent Corp.', ticker: 'COHR', sector: 'ai_hardware', region: 'USA', exchange: 'NYSE' },
+  { name: 'Palantir Technologies', ticker: 'PLTR', sector: 'ai_software', region: 'USA', exchange: 'NYSE' },
+  { name: 'C3.ai', ticker: 'AI', sector: 'ai_software', region: 'USA', exchange: 'NYSE' },
+  { name: 'Innodata', ticker: 'INOD', sector: 'ai_software', region: 'USA', exchange: 'NASDAQ' },
+
+  { name: 'Tata Elxsi', ticker: 'TATAELXSI.NS', sector: 'ai_software', region: 'India', exchange: 'NSE' },
+  { name: 'Persistent Systems', ticker: 'PERSISTENT.NS', sector: 'ai_software', region: 'India', exchange: 'NSE' },
+  { name: 'Affle India', ticker: 'AFFLE.NS', sector: 'ai_software', region: 'India', exchange: 'NSE' },
+  { name: 'Ksolves India', ticker: 'KSOLVES.NS', sector: 'ai_software', region: 'India', exchange: 'NSE' },
+  { name: 'Kaynes Technology', ticker: 'KAYNES.NS', sector: 'semiconductors', region: 'India', exchange: 'NSE' },
+  { name: 'Netweb Technologies', ticker: 'NETWEB.NS', sector: 'ai_infrastructure', region: 'India', exchange: 'NSE' },
+  { name: 'Saksoft', ticker: 'SAKSOFT.NS', sector: 'ai_software', region: 'India', exchange: 'NSE' },
+  { name: 'Oracle Financial Services Software', ticker: 'OFSS.NS', sector: 'ai_software', region: 'India', exchange: 'NSE' },
+  { name: 'SAP', ticker: 'SAP.DE', sector: 'ai_software', region: 'Germany', exchange: 'XETRA' },
+  { name: 'Rheinmetall', ticker: 'RHM.DE', sector: 'technology', region: 'Germany', exchange: 'XETRA' },
+  { name: 'Infineon Technologies', ticker: 'IFX.DE', sector: 'semiconductors', region: 'Germany', exchange: 'XETRA' },
+  { name: 'Siemens', ticker: 'SIE.DE', sector: 'technology', region: 'Germany', exchange: 'XETRA' },
+  { name: 'Northern Data', ticker: 'NB2.DE', sector: 'ai_infrastructure', region: 'Germany', exchange: 'XETRA' },
+  { name: 'United Internet', ticker: 'UTDI.DE', sector: 'ai_infrastructure', region: 'Germany', exchange: 'XETRA' },
+  { name: 'TeamViewer', ticker: 'TMV.DE', sector: 'ai_software', region: 'Germany', exchange: 'XETRA' },
+  { name: 'BrainChip Holdings', ticker: 'BRN.AX', sector: 'semiconductors', region: 'Australia', exchange: 'ASX' },
+  { name: 'Appen', ticker: 'APX.AX', sector: 'ai_software', region: 'Australia', exchange: 'ASX' },
+  { name: 'Nuix', ticker: 'NXL.AX', sector: 'ai_software', region: 'Australia', exchange: 'ASX' },
+  { name: 'NextDC', ticker: 'NXT.AX', sector: 'ai_infrastructure', region: 'Australia', exchange: 'ASX' },
+  { name: 'Macquarie Technology Group', ticker: 'MAQ.AX', sector: 'ai_infrastructure', region: 'Australia', exchange: 'ASX' },
+  { name: 'Megaport', ticker: 'MP1.AX', sector: 'ai_infrastructure', region: 'Australia', exchange: 'ASX' },
+  { name: 'Atlassian', ticker: 'TEAM', sector: 'ai_software', region: 'Australia', exchange: 'NASDAQ' },
+  { name: 'WiseTech Global', ticker: 'WTC.AX', sector: 'ai_software', region: 'Australia', exchange: 'ASX' },
+  { name: 'Xero', ticker: 'XRO.AX', sector: 'ai_software', region: 'Australia', exchange: 'ASX' },
+  { name: 'Weebit Nano', ticker: 'WBT.AX', sector: 'semiconductors', region: 'Australia', exchange: 'ASX' },
+  { name: 'TSMC', ticker: 'TSM', sector: 'semiconductors', region: 'Taiwan', exchange: 'NYSE' },
+  { name: 'MediaTek', ticker: '2454.TW', sector: 'semiconductors', region: 'Taiwan', exchange: 'TWSE' },
+  { name: 'Alchip Technologies', ticker: '3661.TW', sector: 'semiconductors', region: 'Taiwan', exchange: 'TWSE' },
+  { name: 'Hon Hai Precision (Foxconn)', ticker: '2317.TW', sector: 'ai_hardware', region: 'Taiwan', exchange: 'TWSE' },
+  { name: 'Quanta Computer', ticker: '2382.TW', sector: 'ai_hardware', region: 'Taiwan', exchange: 'TWSE' },
+  { name: 'Wiwynn', ticker: '6669.TW', sector: 'ai_hardware', region: 'Taiwan', exchange: 'TWSE' },
+  { name: 'Lite-On Technology', ticker: '2301.TW', sector: 'ai_hardware', region: 'Taiwan', exchange: 'TWSE' },
+  { name: 'Elite Material', ticker: '2383.TW', sector: 'ai_hardware', region: 'Taiwan', exchange: 'TWSE' },
+  { name: 'GlobalWafers', ticker: '6488.TWO', sector: 'semiconductors', region: 'Taiwan', exchange: 'TPEx' },
+  { name: 'Venture Corporation', ticker: 'VMS.SI', sector: 'technology', region: 'Singapore', exchange: 'SGX' },
+  { name: 'AEM Holdings', ticker: 'AWX.SI', sector: 'semiconductors', region: 'Singapore', exchange: 'SGX' },
+
+  { name: 'UMS Integration', ticker: '558.SI', sector: 'semiconductors', region: 'Singapore', exchange: 'SGX' },
+  { name: 'Singtel', ticker: 'Z74.SI', sector: 'ai_infrastructure', region: 'Singapore', exchange: 'SGX' },
+  { name: 'Keppel DC REIT', ticker: 'AJBU.SI', sector: 'ai_infrastructure', region: 'Singapore', exchange: 'SGX' },
+  { name: 'Grab Holdings', ticker: 'GRAB', sector: 'technology', region: 'Singapore', exchange: 'NASDAQ' },
+  { name: 'Arm Holdings', ticker: 'ARM', sector: 'semiconductors', region: 'UK', exchange: 'NASDAQ' },
+  { name: 'Raspberry Pi Holdings', ticker: 'RPI.L', sector: 'ai_hardware', region: 'UK', exchange: 'LSE' },
+  { name: 'Kainos Group', ticker: 'KNOS.L', sector: 'ai_software', region: 'UK', exchange: 'LSE' },
+  { name: 'Ocado Group', ticker: 'OCDO.L', sector: 'robotics', region: 'UK', exchange: 'LSE' },
+  { name: 'MTN Nigeria', ticker: 'MTNN.NG', sector: 'ai_infrastructure', region: 'Nigeria', exchange: 'NGX' },
+  { name: 'Airtel Africa', ticker: 'AIRTELAFRI.NG', sector: 'ai_infrastructure', region: 'Nigeria', exchange: 'NGX' },
+  { name: 'Transcorp Group', ticker: 'TRANSCORP.NG', sector: 'technology', region: 'Nigeria', exchange: 'NGX' },
+  { name: 'Seplat Energy', ticker: 'SEPLAT.LG', sector: 'energy', region: 'Nigeria', exchange: 'NGX' },
+  { name: 'Aradel Holdings', ticker: 'ARADEL.LG', sector: 'energy', region: 'Nigeria', exchange: 'NGX' },
+  { name: 'Oando', ticker: 'OANDO.LG', sector: 'energy', region: 'Nigeria', exchange: 'NGX' },
+  { name: 'Savannah Energy', ticker: 'SAVE.L', sector: 'energy', region: 'Nigeria', exchange: 'LSE' },
+  
+  { name: 'Japaul Gold & Ventures', ticker: 'JAPAULGOLD.LG', sector: 'mining', region: 'Nigeria', exchange: 'NGX' },
+  { name: 'Multiverse Mining', ticker: 'MULTIVERSE.LG', sector: 'mining', region: 'Nigeria', exchange: 'NGX' },
+  { name: 'Thor Explorations', ticker: 'THX.V', sector: 'mining', region: 'Nigeria', exchange: 'TSXV' },
+  { name: 'Conoil', ticker: 'CONOIL.LG', sector: 'energy', region: 'Nigeria', exchange: 'NGX' },
+  { name: 'AstraZeneca', ticker: 'AZN.L', sector: 'healthcare', region: 'UK', exchange: 'LSE' },
+  { name: 'GSK', ticker: 'GSK.L', sector: 'healthcare', region: 'UK', exchange: 'LSE' },
+  { name: 'Hikma Pharmaceuticals', ticker: 'HIK.L', sector: 'healthcare', region: 'UK', exchange: 'LSE' },
+  { name: 'Haleon', ticker: 'HLN.L', sector: 'healthcare', region: 'UK', exchange: 'LSE' },
+  { name: 'Smith & Nephew', ticker: 'SN.L', sector: 'medtech', region: 'UK', exchange: 'LSE' },
+  { name: 'Oxford Nanopore', ticker: 'ONT.L', sector: 'biotech', region: 'UK', exchange: 'LSE' },
+  { name: 'Indivior', ticker: 'INDV.L', sector: 'healthcare', region: 'UK', exchange: 'LSE' },
+  { name: 'Oxford Biomedica', ticker: 'OXB.L', sector: 'biotech', region: 'UK', exchange: 'LSE' },
+  { name: 'Immunocore', ticker: 'IMCR', sector: 'biotech', region: 'UK', exchange: 'NASDAQ' },
+  { name: 'Spire Healthcare', ticker: 'SPI.L', sector: 'healthcare', region: 'UK', exchange: 'LSE' },
+  { name: 'BenevolentAI', ticker: 'BAI.AS', sector: 'biotech', region: 'UK', exchange: 'Euronext Amsterdam' },
+  
+  { name: 'Eli Lilly', ticker: 'LLY', sector: 'healthcare', region: 'USA', exchange: 'NYSE' },
+  { name: 'Johnson & Johnson', ticker: 'JNJ', sector: 'healthcare', region: 'USA', exchange: 'NYSE' },
+  { name: 'AbbVie', ticker: 'ABBV', sector: 'healthcare', region: 'USA', exchange: 'NYSE' },
+  { name: 'Merck & Co.', ticker: 'MRK', sector: 'healthcare', region: 'USA', exchange: 'NYSE' },
+  { name: 'Pfizer', ticker: 'PFE', sector: 'healthcare', region: 'USA', exchange: 'NYSE' },
+  { name: 'Amgen', ticker: 'AMGN', sector: 'biotech', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Regeneron', ticker: 'REGN', sector: 'biotech', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Vertex Pharmaceuticals', ticker: 'VRTX', sector: 'biotech', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'MBX Biosciences', ticker: 'MBX', sector: 'biotech', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Axsome Therapeutics', ticker: 'AXSM', sector: 'biotech', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Medtronic', ticker: 'MDT', sector: 'medtech', region: 'USA', exchange: 'NYSE' },
+
+  { name: 'Stryker', ticker: 'SYK', sector: 'medtech', region: 'USA', exchange: 'NYSE' },
+  { name: 'Intuitive Surgical', ticker: 'ISRG', sector: 'medtech', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Dexcom', ticker: 'DXCM', sector: 'medtech', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Thermo Fisher Scientific', ticker: 'TMO', sector: 'healthcare', region: 'USA', exchange: 'NYSE' },
+  { name: 'Agilent Technologies', ticker: 'A', sector: 'healthcare', region: 'USA', exchange: 'NYSE' },
+  { name: 'McKesson', ticker: 'MCK', sector: 'healthcare', region: 'USA', exchange: 'NYSE' },
+  { name: 'Cardinal Health', ticker: 'CAH', sector: 'healthcare', region: 'USA', exchange: 'NYSE' },
+  { name: 'UnitedHealth Group', ticker: 'UNH', sector: 'healthcare', region: 'USA', exchange: 'NYSE' },
+  { name: 'CVS Health', ticker: 'CVS', sector: 'healthcare', region: 'USA', exchange: 'NYSE' },
+  { name: 'Jiangsu Hengrui Pharma', ticker: '600276.SS', sector: 'healthcare', region: 'China', exchange: 'SSE' },
+  { name: 'Sinopharm Group', ticker: '1099.HK', sector: 'healthcare', region: 'China', exchange: 'HKEX' },
+  { name: 'Shanghai Fosun Pharma', ticker: '600196.SS', sector: 'healthcare', region: 'China', exchange: 'SSE' },
+  { name: 'Sino Biopharmaceutical', ticker: '1177.HK', sector: 'healthcare', region: 'China', exchange: 'HKEX' },
+  { name: 'Hansoh Pharma', ticker: '3692.HK', sector: 'healthcare', region: 'China', exchange: 'HKEX' },
+  { name: 'WuXi AppTec', ticker: '603259.SS', sector: 'biotech', region: 'China', exchange: 'SSE' },
+  { name: 'Innovent Biologics', ticker: '1801.HK', sector: 'biotech', region: 'China', exchange: 'HKEX' },
+  { name: 'BeiGene', ticker: '6160.HK', sector: 'biotech', region: 'China', exchange: 'HKEX' },
+  { name: 'Mindray Medical', ticker: '300760.SZ', sector: 'medtech', region: 'China', exchange: 'SZSE' },
+  
+  { name: 'Access Holdings', ticker: 'ACCESSCORP.LG', sector: 'financials', region: 'Nigeria', exchange: 'NGX' },
+  { name: 'Zenith Bank', ticker: 'ZENITHBANK.LG', sector: 'financials', region: 'Nigeria', exchange: 'NGX' },
+  { name: 'GTCO', ticker: 'GTCO.LG', sector: 'financials', region: 'Nigeria', exchange: 'NGX' },
+  { name: 'UBA', ticker: 'UBA.LG', sector: 'financials', region: 'Nigeria', exchange: 'NGX' },
+  { name: 'FBN Holdings', ticker: 'FBNH.LG', sector: 'financials', region: 'Nigeria', exchange: 'NGX' },
+  { name: 'VFD Group', ticker: 'VFDGROUP.LG', sector: 'financials', region: 'Nigeria', exchange: 'NGX' },
+  { name: 'eTranzact International', ticker: 'ETRANZACT.LG', sector: 'fintech', region: 'Nigeria', exchange: 'NGX' },
+  { name: 'Stanbic IBTC', ticker: 'STANBIC.LG', sector: 'financials', region: 'Nigeria', exchange: 'NGX' },
+  { name: 'AIICO Insurance', ticker: 'AIICO.LG', sector: 'insurance', region: 'Nigeria', exchange: 'NGX' },
+  
+  { name: 'JPMorgan Chase', ticker: 'JPM', sector: 'financials', region: 'USA', exchange: 'NYSE' },
+  { name: 'Bank of America', ticker: 'BAC', sector: 'financials', region: 'USA', exchange: 'NYSE' },
+  { name: 'Citigroup', ticker: 'C', sector: 'financials', region: 'USA', exchange: 'NYSE' },
+  { name: 'Wells Fargo', ticker: 'WFC', sector: 'financials', region: 'USA', exchange: 'NYSE' },
+  { name: 'Goldman Sachs', ticker: 'GS', sector: 'financials', region: 'USA', exchange: 'NYSE' },
+  { name: 'Block', ticker: 'SQ', sector: 'fintech', region: 'USA', exchange: 'NYSE' },
+  { name: 'PayPal', ticker: 'PYPL', sector: 'fintech', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'SoFi Technologies', ticker: 'SOFI', sector: 'fintech', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Fiserv', ticker: 'FI', sector: 'financials', region: 'USA', exchange: 'NYSE' },
+  { name: 'Marqeta', ticker: 'MQ', sector: 'fintech', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'BlackRock', ticker: 'BLK', sector: 'asset_management', region: 'USA', exchange: 'NYSE' },
+  { name: 'Charles Schwab', ticker: 'SCHW', sector: 'asset_management', region: 'USA', exchange: 'NYSE' },
+
+  { name: 'BAE Systems', ticker: 'BA.L', sector: 'defense & aerospace', region: 'UK', exchange: 'LSE' },
+  { name: 'Rolls-Royce Holdings', ticker: 'RR.L', sector: 'defense & aerospace', region: 'UK', exchange: 'LSE' },
+  { name: 'Babcock International', ticker: 'BAB.L', sector: 'defense & aerospace', region: 'UK', exchange: 'LSE' },
+  { name: 'Leonardo S.p.A.', ticker: 'LDO.MI', sector: 'defense & aerospace', region: 'Italy', exchange: 'BIT' },
+  { name: 'Thales Group', ticker: 'HO.PA', sector: 'defense & aerospace', region: 'France', exchange: 'EPA' },
+  { name: 'QinetiQ Group', ticker: 'QQ.L', sector: 'defense & aerospace', region: 'UK', exchange: 'LSE' },
+  { name: 'Melrose Industries', ticker: 'MRO.L', sector: 'aerospace components', region: 'UK', exchange: 'LSE' },
+  { name: 'Chemring Group', ticker: 'CHG.L', sector: 'defense technology', region: 'UK', exchange: 'LSE' },
+  { name: 'Cohort PLC', ticker: 'CHRT.L', sector: 'defense electronics', region: 'UK', exchange: 'LSE' },
+  { name: 'DroneShield', ticker: 'DRO.AX', sector: 'defense technology', region: 'Australia', exchange: 'ASX' },
+  { name: 'Avon Technologies', ticker: 'AVON.L', sector: 'defense equipment', region: 'UK', exchange: 'LSE' },
+  { name: 'MS International', ticker: 'MSI.L', sector: 'defense equipment', region: 'UK', exchange: 'LSE' },
+  { name: 'Senior PLC', ticker: 'SNR.L', sector: 'aerospace components', region: 'UK', exchange: 'LSE' },
+  { name: 'Pennant International', ticker: 'PEN.L', sector: 'defense services', region: 'UK', exchange: 'LSE' },
+  { name: 'Velocity Composites', ticker: 'VEL.L', sector: 'aerospace materials', region: 'UK', exchange: 'LSE' },
+  { name: 'Airbus SE', ticker: 'AIR.PA', sector: 'aerospace', region: 'France', exchange: 'EPA' },
+  { name: 'Vertical Aerospace', ticker: 'EVTL', sector: 'aerospace technology', region: 'UK', exchange: 'NYSE' },
+  { name: 'Terex Corporation', ticker: 'TEX', sector: 'heavy equipment', region: 'USA', exchange: 'NYSE' },
+  { name: 'Victrex PLC', ticker: 'VCT.L', sector: 'advanced materials', region: 'UK', exchange: 'LSE' },
+  { name: 'Filtronic', ticker: 'FTC.L', sector: 'rf & microwave tech', region: 'UK', exchange: 'LSE' },
+  { name: 'Tesla', ticker: 'TSLA', sector: 'automotive & ev', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'General Motors', ticker: 'GM', sector: 'automotive', region: 'USA', exchange: 'NYSE' },
+  { name: 'Ford Motor Company', ticker: 'F', sector: 'automotive', region: 'USA', exchange: 'NYSE' },
+  { name: 'Rivian Automotive', ticker: 'RIVN', sector: 'automotive & ev', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Lockheed Martin', ticker: 'LMT', sector: 'defense & aerospace', region: 'USA', exchange: 'NYSE' },
+  { name: 'Boeing', ticker: 'BA', sector: 'aerospace', region: 'USA', exchange: 'NYSE' },
+  { name: 'GE Aerospace', ticker: 'GE', sector: 'aerospace engines', region: 'USA', exchange: 'NYSE' },
+  { name: 'Northrop Grumman', ticker: 'NOC', sector: 'defense & aerospace', region: 'USA', exchange: 'NYSE' },
+  { name: 'Rocket Lab USA', ticker: 'RKLB', sector: 'space technology', region: 'USA', exchange: 'NASDAQ' },
+
+  { name: 'Caterpillar', ticker: 'CAT', sector: 'heavy equipment', region: 'USA', exchange: 'NYSE' },
+  { name: 'Deere & Company', ticker: 'DE', sector: 'heavy machinery', region: 'USA', exchange: 'NYSE' },
+  { name: 'Oshkosh Corporation', ticker: 'OSK', sector: 'defense vehicles', region: 'USA', exchange: 'NYSE' },
+  { name: 'RTX Corporation', ticker: 'RTX', sector: 'defense & aerospace', region: 'USA', exchange: 'NYSE' },
+  { name: 'Parker-Hannifin', ticker: 'PH', sector: 'industrial components', region: 'USA', exchange: 'NYSE' },
+  { name: 'TransDigm Group', ticker: 'TDG', sector: 'aerospace components', region: 'USA', exchange: 'NYSE' },
+  { name: 'Hexcel Corporation', ticker: 'HXL', sector: 'advanced composites', region: 'USA', exchange: 'NYSE' },
+  { name: 'Protolabs', ticker: 'PRLB', sector: 'digital manufacturing', region: 'USA', exchange: 'NYSE' },
+  { name: 'Volkswagen Group', ticker: 'VOW3.DE', sector: 'automotive', region: 'Germany', exchange: 'FWB' },
+  { name: 'Mercedes-Benz Group', ticker: 'MBG.DE', sector: 'automotive', region: 'Germany', exchange: 'FWB' },
+  { name: 'BMW Group', ticker: 'BMW.DE', sector: 'automotive', region: 'Germany', exchange: 'FWB' },
+  { name: 'Porsche AG', ticker: 'P911.DE', sector: 'automotive', region: 'Germany', exchange: 'FWB' },
+  { name: 'MTU Aero Engines', ticker: 'MTX.DE', sector: 'aerospace engines', region: 'Germany', exchange: 'FWB' },
+  { name: 'OHB SE', ticker: 'OHB.DE', sector: 'space systems', region: 'Germany', exchange: 'FWB' },
+  { name: 'Traton SE', ticker: '8TRA.DE', sector: 'heavy vehicles', region: 'Germany', exchange: 'FWB' },
+  { name: 'Jungheinrich AG', ticker: 'JUN3.DE', sector: 'industrial equipment', region: 'Germany', exchange: 'FWB' },
+  { name: 'Deutz AG', ticker: 'DEZ.DE', sector: 'engines', region: 'Germany', exchange: 'FWB' },
+  { name: 'Continental AG', ticker: 'CON.DE', sector: 'automotive components', region: 'Germany', exchange: 'FWB' },
+  { name: 'Schaeffler AG', ticker: 'SHA.DE', sector: 'automotive components', region: 'Germany', exchange: 'FWB' },
+  { name: 'BYD Company', ticker: '1211.HK', sector: 'automotive & ev', region: 'China', exchange: 'HKEX' },
+  { name: 'SAIC Motor', ticker: '600104.SS', sector: 'automotive', region: 'China', exchange: 'SSE' },
+  { name: 'Geely Automobile', ticker: '0175.HK', sector: 'automotive', region: 'China', exchange: 'HKEX' },
+  { name: 'NIO', ticker: 'NIO', sector: 'automotive & ev', region: 'China', exchange: 'NYSE' },
+
+  { name: 'XPeng', ticker: 'XPEV', sector: 'automotive & ev', region: 'China', exchange: 'NYSE' },
+  { name: 'Li Auto', ticker: 'LI', sector: 'automotive & ev', region: 'China', exchange: 'NASDAQ' },
+  { name: 'AVIC Shenyang Aircraft', ticker: '600760.SS', sector: 'defense aerospace', region: 'China', exchange: 'SSE' },
+  { name: 'AVIC Xi\'an Aircraft', ticker: '000768.SZ', sector: 'defense aerospace', region: 'China', exchange: 'SZSE' },
+  { name: 'EHang Holdings', ticker: 'EH', sector: 'aerospace technology', region: 'China', exchange: 'NASDAQ' },
+  { name: 'Sany Heavy Industry', ticker: '600031.SS', sector: 'heavy equipment', region: 'China', exchange: 'SSE' },
+  { name: 'CRRC Corporation', ticker: '1766.HK', sector: 'rail & heavy industry', region: 'China', exchange: 'HKEX' },
+  { name: 'Sinomach Heavy Equipment', ticker: '601399.SS', sector: 'heavy equipment', region: 'China', exchange: 'SSE' },
+  { name: 'XCMG Construction Machinery', ticker: '000425.SZ', sector: 'heavy equipment', region: 'China', exchange: 'SZSE' },
+  { name: 'CATL', ticker: '300750.SZ', sector: 'ev batteries', region: 'China', exchange: 'SZSE' },
+  { name: 'Weichai Power', ticker: '2338.HK', sector: 'engines & powertrains', region: 'China', exchange: 'HKEX' },
+  { name: 'Fuyao Glass Industry', ticker: '3606.HK', sector: 'automotive components', region: 'China', exchange: 'HKEX' },
+
+  { name: 'Abu Dhabi Aviation', ticker: 'ADAVIATION.AD', sector: 'aerospace services', region: 'UAE', exchange: 'ADX' },
+  { name: 'Space42', ticker: 'SPACE42.AD', sector: 'satellite & ai systems', region: 'UAE', exchange: 'ADX' },
+  { name: 'Lucid Group', ticker: 'LCID', sector: 'automotive & ev', region: 'USA', exchange: 'NASDAQ' },
+  { name: 'Tofas Turk Otomobil', ticker: 'TOASO.IS', sector: 'automotive', region: 'Turkey', exchange: 'BIST' },
+  { name: 'Zamil Industrial', ticker: '2240.SR', sector: 'industrial manufacturing', region: 'Saudi Arabia', exchange: 'TADAWUL' },
+  { name: 'Olin Corporation', ticker: 'OLN', sector: 'industrial chemicals & ammunition', region: 'USA', exchange: 'NYSE' },
+  { name: 'Saudi Cement Company', ticker: '3030.SR', sector: 'cement', region: 'Saudi Arabia', exchange: 'TADAWUL' },
+  { name: 'Southern Province Cement', ticker: '3050.SR', sector: 'cement', region: 'Saudi Arabia', exchange: 'TADAWUL' },
+  { name: 'National Cement Co PSC', ticker: 'NCC.DU', sector: 'cement', region: 'UAE', exchange: 'DFM' },
+  { name: 'Qatar National Cement', ticker: 'QNCD.QA', sector: 'cement', region: 'Qatar', exchange: 'QSE' },
+  { name: 'Kuwait Cement Co', ticker: 'KCEM.KW', sector: 'cement', region: 'Kuwait', exchange: 'Boursa Kuwait' },
+  { name: 'Arabian Cement Egypt', ticker: 'ARCC.CA', sector: 'cement', region: 'Egypt', exchange: 'EGX' },
+  { name: 'Orascom Construction', ticker: 'OC.DU', sector: 'construction', region: 'UAE', exchange: 'NASDAQ Dubai' },
+  { name: 'Drake & Scull International', ticker: 'DSI.DU', sector: 'construction', region: 'UAE', exchange: 'DFM' },
+  { name: 'Zamil Industrial', ticker: '2240.SR', sector: 'construction equipment', region: 'Saudi Arabia', exchange: 'TADAWUL' },
+  { name: 'Arkan Emsteel Group', ticker: 'EMSTEEL.AD', sector: 'building materials', region: 'UAE', exchange: 'ADX' },
+  { name: 'Acrow Misr', ticker: 'ACRO.CA', sector: 'construction equipment', region: 'Egypt', exchange: 'EGX' },
+
+  { name: 'Heidelberg Materials', ticker: 'HEI.DE', sector: 'cement', region: 'Germany', exchange: 'XETRA' },
+  { name: 'Breedon Group', ticker: 'BREE.L', sector: 'cement', region: 'UK', exchange: 'LSE' },
+  { name: 'CRH plc', ticker: 'CRH', sector: 'cement', region: 'USA/Ireland', exchange: 'NYSE' },
+  { name: 'Cemex', ticker: 'CX', sector: 'cement', region: 'Mexico', exchange: 'NYSE' },
+  { name: 'Balfour Beatty', ticker: 'BBY.L', sector: 'construction', region: 'UK', exchange: 'LSE' },
+  { name: 'Morgan Sindall', ticker: 'MGNS.L', sector: 'construction', region: 'UK', exchange: 'LSE' },
+  { name: 'Kier Group', ticker: 'KIE.L', sector: 'construction', region: 'UK', exchange: 'LSE' },
+{ name: 'Keller Group', ticker: 'KLR.L', sector: 'construction', region: 'UK', exchange: 'LSE' },
+{ name: 'Galliford Try', ticker: 'GFRD.L', sector: 'construction', region: 'UK', exchange: 'LSE' },
+  
+{ name: 'Vulcan Materials', ticker: 'VMC', sector: 'cement', region: 'USA', exchange: 'NYSE' },
+{ name: 'Martin Marietta', ticker: 'MLM', sector: 'cement', region: 'USA', exchange: 'NYSE' },
+{ name: 'Eagle Materials', ticker: 'EXP', sector: 'cement', region: 'USA', exchange: 'NYSE' },
+{ name: 'Caterpillar', ticker: 'CAT', sector: 'construction equipment', region: 'USA', exchange: 'NYSE' },
+{ name: 'Fluor Corporation', ticker: 'FLR', sector: 'construction', region: 'USA', exchange: 'NYSE' },
+{ name: 'Sterling Infrastructure', ticker: 'STRL', sector: 'construction', region: 'USA', exchange: 'NASDAQ' },
+{ name: 'United Rentals', ticker: 'URI', sector: 'equipment rental', region: 'USA', exchange: 'NYSE' },
+{ name: 'Oshkosh Corp', ticker: 'OSK', sector: 'construction equipment', region: 'USA', exchange: 'NYSE' },
+  
+{ name: 'Dangote Cement', ticker: 'DANGCEM', sector: 'cement', region: 'Nigeria', exchange: 'NGX' },
+{ name: 'BUA Cement', ticker: 'BUACEMENT', sector: 'cement', region: 'Nigeria', exchange: 'NGX' },
+{ name: 'Lafarge Africa', ticker: 'WAPCO', sector: 'cement', region: 'Nigeria', exchange: 'NGX' },
+{ name: 'Julius Berger Nigeria', ticker: 'JBERGER', sector: 'construction', region: 'Nigeria', exchange: 'NGX' },
+{ name: 'SCOA Nigeria', ticker: 'SCOA', sector: 'equipment', region: 'Nigeria', exchange: 'NGX' },
+  
+{ name: 'Pearson PLC', ticker: 'PSON.L', sector: 'education', region: 'UK', exchange: 'LSE' },
+{ name: 'RELX', ticker: 'REL.L', sector: 'research data', region: 'UK', exchange: 'LSE' },
+{ name: 'Informa PLC', ticker: 'INF.L', sector: 'research publishing', region: 'UK', exchange: 'LSE' },
+{ name: 'Clarivate', ticker: 'CLVT', sector: 'research analytics', region: 'USA/UK', exchange: 'NYSE' },
+{ name: 'Oxford Nanopore', ticker: 'ONT.L', sector: 'scientific equipment', region: 'UK', exchange: 'LSE' },
+{ name: 'Renishaw', ticker: 'RSW.L', sector: 'precision instrumentation', region: 'UK', exchange: 'LSE' },
+{ name: 'Spectris', ticker: 'SXS.L', sector: 'instrumentation', region: 'UK', exchange: 'LSE' },
+{ name: 'Coursera', ticker: 'COUR', sector: 'education technology', region: 'USA', exchange: 'NYSE' },
+{ name: 'Duolingo', ticker: 'DUOL', sector: 'education technology', region: 'USA', exchange: 'NASDAQ' },
+{ name: 'Chegg', ticker: 'CHGG', sector: 'education technology', region: 'USA', exchange: 'NYSE' },
+{ name: 'Grand Canyon Education', ticker: 'LOPE', sector: 'higher education', region: 'USA', exchange: 'NASDAQ' },
+{ name: 'Adtalem Global Education', ticker: 'ATGE', sector: 'higher education', region: 'USA', exchange: 'NYSE' },
+{ name: 'Strategic Education', ticker: 'STRA', sector: 'higher education', region: 'USA', exchange: 'NASDAQ' },
+{ name: 'Stride Inc.', ticker: 'LRN', sector: 'K-12 education', region: 'USA', exchange: 'NYSE' },
+{ name: 'Udemy', ticker: 'UDMY', sector: 'education technology', region: 'USA', exchange: 'NASDAQ' },
+{ name: 'Nerdy Inc.', ticker: 'NRDY', sector: 'education technology', region: 'USA', exchange: 'NYSE' },
+{ name: 'John Wiley & Sons', ticker: 'WLY', sector: 'research publishing', region: 'USA', exchange: 'NYSE' },
+{ name: 'Thermo Fisher Scientific', ticker: 'TMO', sector: 'scientific equipment', region: 'USA', exchange: 'NYSE' },
+{ name: 'Illumina', ticker: 'ILMN', sector: 'genomics', region: 'USA', exchange: 'NASDAQ' },
+{ name: 'Agilent Technologies', ticker: 'A', sector: 'analytical instruments', region: 'USA', exchange: 'NYSE' },
+
+ { name: 'Suncor Energy', ticker: 'SU', sector: 'energy', region: 'Canada', exchange: 'NYSE/TSX' },
+{ name: 'Coterra Energy', ticker: 'CTRA', sector: 'energy', region: 'USA', exchange: 'NYSE' },
+{ name: 'First Quantum Minerals', ticker: 'FM.TO', sector: 'mining', region: 'Canada', exchange: 'TSX' },
+{ name: 'Ascot Resources', ticker: 'AOT.TO', sector: 'mining', region: 'Canada', exchange: 'TSX' },
+{ name: 'Petrobras', ticker: 'PBR', sector: 'energy', region: 'Brazil', exchange: 'NYSE' },
+{ name: 'Vale', ticker: 'VALE', sector: 'mining', region: 'Brazil', exchange: 'NYSE' },
+{ name: 'SQM', ticker: 'SQM', sector: 'mining', region: 'Chile', exchange: 'NYSE' },
+{ name: 'Ecopetrol', ticker: 'EC', sector: 'energy', region: 'Colombia', exchange: 'NYSE' },
+{ name: 'Buenaventura', ticker: 'BVN', sector: 'mining', region: 'Peru', exchange: 'NYSE' },
+{ name: 'Lundin Mining', ticker: 'LUN.TO', sector: 'mining', region: 'Canada', exchange: 'TSX' },
+{ name: 'Arcadium Lithium', ticker: 'ALTM', sector: 'mining', region: 'Argentina', exchange: 'NYSE' },
+{ name: 'Sierra Metals', ticker: 'SMT.TO', sector: 'mining', region: 'Canada', exchange: 'TSX' },
+{ name: 'Arrow Exploration', ticker: 'AXL.V', sector: 'energy', region: 'Canada', exchange: 'TSXV' },
+
+ { name: 'Global X Hydrogen ETF', ticker: 'HYDR', sector: 'etf', region: 'USA', exchange: 'NASDAQ' },
+{ name: 'Defiance Next Gen H2 ETF', ticker: 'HDRO', sector: 'etf', region: 'USA', exchange: 'NYSE' },
+{ name: 'Direxion Hydrogen ETF', ticker: 'HJEN', sector: 'etf', region: 'USA', exchange: 'NYSE' },
+{ name: 'L&G Hydrogen Economy UCITS ETF', ticker: 'HTWO.L', sector: 'etf', region: 'Europe', exchange: 'LSE' },
+{ name: 'VanEck Hydrogen Economy UCITS ETF', ticker: 'HDRO.L', sector: 'etf', region: 'Europe', exchange: 'LSE' },
+{ name: 'Global X Hydrogen UCITS ETF', ticker: 'HYGG.L', sector: 'etf', region: 'Europe', exchange: 'LSE' },
+{ name: 'Amundi Global Hydrogen ESG ETF', ticker: 'HGEN.PA', sector: 'etf', region: 'Europe', exchange: 'Euronext Paris' }
+        ];
+        
+        let alerts = [];
+        let currentStocks = [];
+        
+        // Generate mock real-time data
+        function generateStockData(stock) {
+            const basePrice = Math.random() * 500 + 50;
+            const change = (Math.random() - 0.5) * 10;
+            const changePercent = (change / basePrice) * 100;
+            
+            return {
+                ...stock,
+                price: basePrice.toFixed(2),
+                change: change.toFixed(2),
+                changePercent: changePercent.toFixed(2),
+                volume: (Math.random() * 10000000).toFixed(0),
+                high: (basePrice * 1.05).toFixed(2),
+                low: (basePrice * 0.95).toFixed(2),
+                marketCap: ((basePrice * Math.random() * 1000000000) / 1000000000).toFixed(2) + 'B',
+                news: generateNews(stock.name)
+            };
+        }
+        
+        function generateNews(companyName) {
+            const newsTemplates = [
+                `${companyName} announces breakthrough in next-gen technology`,
+                `Analysts upgrade ${companyName} stock rating`,
+                `${companyName} reports strong quarterly earnings`,
+                `${companyName} expands operations in emerging markets`,
+                `${companyName} CEO discusses future growth strategy`
+            ];
+            return [newsTemplates[Math.floor(Math.random() * newsTemplates.length)]];
+        }
+        
+        function renderStocks(stocks = stocksDatabase) {
+            const grid = document.getElementById('stocksGrid');
+            currentStocks = stocks.map(generateStockData);
+            
+            grid.innerHTML = currentStocks.map(stock => {
+                const isPositive = parseFloat(stock.change) >= 0;
+                const hasAlert = alerts.some(a => a.ticker === stock.ticker);
+                
+                return `
+                    <div class="stock-card" onclick="openStockDetail('${stock.ticker}')">
+                        ${hasAlert ? '<div class="alert-indicator"></div>' : ''}
+                        <div class="stock-header">
+                            <div>
+                                <div class="stock-name">${stock.name}</div>
+                                <div class="stock-ticker">${stock.ticker} • ${stock.exchange}</div>
+                            </div>
+                        </div>
+                        <div class="stock-price">$${stock.price}</div>
+                        <div class="price-change ${isPositive ? 'positive' : 'negative'}">
+                            ${isPositive ? '▲' : '▼'} ${Math.abs(stock.change)} (${Math.abs(stock.changePercent)}%)
+                        </div>
+                        <div class="stock-details">
+                            <div class="detail-item">
+                                <div class="detail-label">Volume</div>
+                                <div class="detail-value">${parseInt(stock.volume).toLocaleString()}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Market Cap</div>
+                                <div class="detail-value">$${stock.marketCap}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Day High</div>
+                                <div class="detail-value">$${stock.high}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Day Low</div>
+                                <div class="detail-value">$${stock.low}</div>
+                            </div>
+                        </div>
+                        <div class="news-section">
+                            <div class="news-title">Latest News</div>
+                            ${stock.news.map(item => `<div class="news-item">${item}</div>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            updateStats();
+        }
+        
+        function updateStats() {
+            document.getElementById('totalStocks').textContent = currentStocks.length;
+            document.getElementById('gainersCount').textContent = currentStocks.filter(s => parseFloat(s.change) > 0).length;
+            document.getElementById('losersCount').textContent = currentStocks.filter(s => parseFloat(s.change) < 0).length;
+            document.getElementById('alertsCount').textContent = alerts.length;
+        }
+        
+        function openStockDetail(ticker) {
+            const stock = currentStocks.find(s => s.ticker === ticker);
+            if (!stock) return;
+            
+            const modal = document.getElementById('stockModal');
+            const content = document.getElementById('modalContent');
+            
+            const isPositive = parseFloat(stock.change) >= 0;
+            
+            content.innerHTML = `
+                <h2 style="font-size: 2rem; margin-bottom: 10px;">${stock.name}</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 30px; font-family: 'JetBrains Mono', monospace;">${stock.ticker} • ${stock.exchange} • ${stock.sector.toUpperCase()}</p>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                    <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 12px;">
+                        <div class="detail-label">Current Price</div>
+                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 2.5rem; font-weight: 700; color: ${isPositive ? 'var(--accent-green)' : 'var(--accent-red)'};">$${stock.price}</div>
+                        <div class="price-change ${isPositive ? 'positive' : 'negative'}" style="margin-top: 10px;">
+                            ${isPositive ? '▲' : '▼'} ${Math.abs(stock.change)} (${Math.abs(stock.changePercent)}%)
+                        </div>
+                    </div>
+                    <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 12px;">
+                        <div class="detail-label">Volume</div>
+                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 1.5rem; font-weight: 700; margin-top: 10px;">${parseInt(stock.volume).toLocaleString()}</div>
+                    </div>
+                    <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 12px;">
+                        <div class="detail-label">Market Cap</div>
+                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 1.5rem; font-weight: 700; margin-top: 10px;">$${stock.marketCap}</div>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <div>Price chart visualization (Connect to real API for live charts)</div>
+                </div>
+                
+                <h3 style="margin: 30px 0 15px; font-size: 1.2rem;">Technical Indicators</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                    <div style="background: var(--bg-tertiary); padding: 15px; border-radius: 8px;">
+                        <div class="detail-label">RSI (14)</div>
+                        <div class="detail-value" style="margin-top: 5px;">${(Math.random() * 100).toFixed(1)}</div>
+                    </div>
+                    <div style="background: var(--bg-tertiary); padding: 15px; border-radius: 8px;">
+                        <div class="detail-label">MACD</div>
+                        <div class="detail-value" style="margin-top: 5px;">${(Math.random() * 10 - 5).toFixed(2)}</div>
+                    </div>
+                    <div style="background: var(--bg-tertiary); padding: 15px; border-radius: 8px;">
+                        <div class="detail-label">SMA (50)</div>
+                        <div class="detail-value" style="margin-top: 5px;">$${(parseFloat(stock.price) * 0.98).toFixed(2)}</div>
+                    </div>
+                    <div style="background: var(--bg-tertiary); padding: 15px; border-radius: 8px;">
+                        <div class="detail-label">SMA (200)</div>
+                        <div class="detail-value" style="margin-top: 5px;">$${(parseFloat(stock.price) * 0.95).toFixed(2)}</div>
+                    </div>
+                </div>
+                
+                <h3 style="margin: 30px 0 15px; font-size: 1.2rem;">Recent News & Sentiment</h3>
+                <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 12px;">
+                    ${stock.news.map(item => `
+                        <div style="padding: 12px 0; border-bottom: 1px solid var(--border-color);">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                                <span style="background: var(--accent-green); color: var(--bg-primary); padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700;">BULLISH</span>
+                                <span style="color: var(--text-secondary); font-size: 0.75rem;">2 hours ago</span>
+                            </div>
+                            <div style="font-size: 0.95rem; line-height: 1.5;">${item}</div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div style="margin-top: 30px;">
+                    <button onclick="addAlert('${stock.ticker}')" style="width: auto; padding: 15px 30px;">
+                        Set Price Alert for ${stock.ticker}
+                    </button>
+                </div>
+            `;
+            
+            modal.classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('stockModal').classList.remove('active');
+        }
+        
+        function addAlert(ticker) {
+            const price = prompt(`Set alert price for ${ticker}:`);
+            if (price) {
+                alerts.push({ ticker, targetPrice: parseFloat(price) });
+                alert(`Alert set for ${ticker} at $${price}`);
+                updateStats();
+                renderStocks(getFilteredStocks());
+            }
+        }
+        
+        function getFilteredStocks() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const sector = document.getElementById('sectorFilter').value;
+            const region = document.getElementById('regionFilter').value;
+            
+            return stocksDatabase.filter(stock => {
+                const matchesSearch = stock.name.toLowerCase().includes(search) || stock.ticker.toLowerCase().includes(search);
+                const matchesSector = !sector || stock.sector === sector;
+                const matchesRegion = !region || stock.region === region;
+                return matchesSearch && matchesSector && matchesRegion;
+            });
+        }
+        
+        // Event listeners
+        document.getElementById('searchInput').addEventListener('input', () => {
+            renderStocks(getFilteredStocks());
+        });
+        
+        document.getElementById('sectorFilter').addEventListener('change', () => {
+            renderStocks(getFilteredStocks());
+        });
+        
+        document.getElementById('regionFilter').addEventListener('change', () => {
+            renderStocks(getFilteredStocks());
+        });
+        
+        document.getElementById('setAlertBtn').addEventListener('click', () => {
+            alert('Alert configuration panel - Set price targets, % change alerts, and notification preferences');
+        });
+        
+        // Close modal on outside click
+        document.getElementById('stockModal').addEventListener('click', (e) => {
+            if (e.target.id === 'stockModal') closeModal();
+        });
+        
+        // Initialize
+        renderStocks();
+        
+        // Simulate real-time updates every 5 seconds
+        setInterval(() => {
+            renderStocks(getFilteredStocks());
+        }, 5000);
+    </script>
+</body>
+</html>
